@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import styles from "../styles/Result.module.css";
 import { getBreathMessage } from "../hooks/getBreathMessage";
+import { useBreath } from "../contexts/BreathContext";
+import { chainSettings, formatDuration } from "./settings";
 
 export default function Result() {
   const [message, setMessage] = useState<{
@@ -12,10 +14,12 @@ export default function Result() {
     part2: React.ReactElement;
   } | null>(null);
 
+  const { chain, startBlock } = useBreath();
   const [blockNumber, setBlockNumber] = useState(1);
   // const provider = useProvider();
   const router = useRouter();
 
+  //TODO:
   // useEffect(() => {
   //   async function fetchBlock() {
   //     const block = await provider.getBlockNumber();
@@ -24,17 +28,18 @@ export default function Result() {
   //   fetchBlock();
   // }, [provider]);
 
-  //TODO: Hard-coded session details; adjust these as needed.
-  const chainName = "XX Chain";
-  const duration = "10 minutes";
-  const startBlock = 1849234;
-  const endBlock = 1849258;
+  const chainName = chain
+    ? chain.charAt(0)?.toUpperCase() + chain.slice(1)
+    : "Ethereum";
+  const totalDuration = chainSettings[chain ?? "ethereum"]?.totalDuration;
+  const duration = formatDuration(totalDuration);
+  const endBlock = 1849258; //TODO:
 
   useEffect(() => {
     const selected = getBreathMessage(
       chainName,
       duration,
-      startBlock,
+      startBlock ?? 0,
       endBlock
     );
     setMessage(selected);

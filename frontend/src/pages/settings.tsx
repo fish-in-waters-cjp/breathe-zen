@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import styles from "../styles/Settings.module.css";
+import { useBreath } from "../contexts/BreathContext";
 
 // Hard-coded settings for each chain.
 // Each chain has a blockTime (seconds per block) and a fixed totalDuration (in seconds).
@@ -12,21 +12,21 @@ interface ChainSettings {
   totalDuration: number;
 }
 
-const chainSettings: { [key: string]: ChainSettings } = {
-  mainnet: {
-    label: "Mainnet",
-    blockTime: 15, // e.g., 15 sec per block
-    totalDuration: 60, // 1 minute
+export const chainSettings: { [key: string]: ChainSettings } = {
+  ethereum: {
+    label: "Ethereum",
+    blockTime: 12, // e.g., 12 sec per block
+    totalDuration: 12, // 12 sec
   },
   polygon: {
     label: "Polygon",
     blockTime: 2, // 2 sec per block
-    totalDuration: 10, // 10 sec
+    totalDuration: 30, // 30 sec
   },
   optimism: {
     label: "Optimism",
     blockTime: 2, // 2 sec per block
-    totalDuration: 30, // 30 sec
+    totalDuration: 60, // 1 minute
   },
   arbitrum: {
     label: "Arbitrum",
@@ -41,7 +41,7 @@ const chainSettings: { [key: string]: ChainSettings } = {
 };
 
 // Helper to format seconds into a human‑readable string.
-const formatDuration = (seconds: number) => {
+export const formatDuration = (seconds: number) => {
   if (seconds < 60) return `${seconds} sec`;
   const minutes = Math.floor(seconds / 60);
   const remSec = seconds % 60;
@@ -50,16 +50,13 @@ const formatDuration = (seconds: number) => {
 
 export default function Settings() {
   const router = useRouter();
-  const [chain, setChain] = useState("mainnet");
-  const currentSettings = chainSettings[chain];
+  const { chain, setChain } = useBreath();
+  const currentSettings = chainSettings[chain ?? "ethereum"];
   const { blockTime, totalDuration } = currentSettings;
-  // Calculate approximate block count
   const blocksCount = Math.floor(totalDuration / blockTime);
 
   const goBack = () => router.push("/");
   const handleSave = () => {
-    // Save settings here (e.g., in context or localStorage)
-    // localStorage.setItem('settings', JSON.stringify({ chain, settings: currentSettings }));
     goBack();
   };
 
@@ -73,7 +70,7 @@ export default function Settings() {
           Select Chain:
           <select
             className={styles.select}
-            value={chain}
+            value={chain ?? "ethereum"}
             onChange={(e) => setChain(e.target.value)}
           >
             {Object.keys(chainSettings).map((key) => (
