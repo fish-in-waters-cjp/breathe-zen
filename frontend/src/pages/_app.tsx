@@ -1,44 +1,40 @@
-import "../styles/globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import type { AppProps } from "next/app";
 import { BreathProvider } from "../contexts/BreathContext";
+import "../styles/globals.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from "wagmi";
+import { WagmiProvider, http } from "wagmi";
+import { hardhat, polygon } from 'wagmi/chains';
 
 // import { config } from "../wagmi";
 
 import {
   RainbowKitProvider,
-  getDefaultConfig,
-  Chain,
+  getDefaultConfig
 } from "@rainbow-me/rainbowkit";
-
-const breathChain = {
-  id: 137, // Polygon 主網 Chain ID
-  name: "Polygon BREATH",
-  network: "polygon",
-  iconUrl: "YOUR_BREATH_TOKEN_ICON_URL", // 你的 BREATH 代幣圖示 URL
-  iconBackground: "#fff",
-  nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://polygon-rpc.com"] },
-  },
-  blockExplorers: {
-    default: { name: "Polygonscan", url: "https://polygonscan.com" },
-  },
-  contracts: {
-    multicall3: {
-      address: "0xca11bde05977b3631167028862be2a173976ca11", // 示例地址，請根據實際情況修改
-      blockCreated: 0, // 若有需要，可填入代幣部署時的區塊號
-    },
-  },
-} as const;
 
 const config = getDefaultConfig({
   appName: "Breathe Zen",
   projectId: "YOUR_PROJECT_ID",
-  chains: [breathChain],
+  chains: [
+    {
+      ...polygon,
+      rpcUrls: {
+        default: { http: ["https://polygon-rpc.com"] }
+      }
+    },
+    {
+      ...hardhat,
+      id: 1337,
+      BreathZenToken: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      MeditationRecorder: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    }
+  ],
+  transports: {
+    [polygon.id]: http(),
+    [1337]: http('http://127.0.0.1:8545'),
+  },
 });
 
 const client = new QueryClient();

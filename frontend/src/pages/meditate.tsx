@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import styles from "../styles/Meditate.module.css";
-import { useBreath } from "../contexts/BreathContext";
+import { useEffect, useState } from "react";
 import { useBlockNumber } from "wagmi";
+import { useBreath } from "../contexts/BreathContext";
+import styles from "../styles/Meditate.module.css";
 
 // Define a mapping of breathing timings for different configurations.
 // Each object now includes a "cycles" property.
@@ -45,6 +45,9 @@ export default function Meditate() {
     } else {
       // Start the breathing cycle with the "inhale" phase
       if (startBlock) setStartBlock(startBlock);
+      
+      // 設置開始時間
+      localStorage.setItem('meditationStartTime', Math.floor(Date.now() / 1000).toString());
 
       setBreathingPhase("inhale");
       setPhaseTimeLeft(selectedTimings.inhale);
