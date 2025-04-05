@@ -7,8 +7,11 @@ interface IBreathZenToken {
 
 contract MeditationRecorder {
     struct Meditation {
-        uint256 startTime;
-        uint256 endTime;
+        bytes32 id;
+        uint256 startBlock;
+        uint256 endBlock;
+        uint256 totalCount;
+        string chain;
     }
 
     mapping(address => Meditation[]) private records;
@@ -17,8 +20,11 @@ contract MeditationRecorder {
 
     event MeditationRecorded(
         address indexed user,
-        uint256 startTime,
-        uint256 endTime,
+        bytes32 id,
+        uint256 startBlock,
+        uint256 endBlock,
+        uint256 totalCount,
+        string chain,
         uint256 reward
     );
 
@@ -26,15 +32,36 @@ contract MeditationRecorder {
         token = IBreathZenToken(tokenAddress);
     }
 
-    function recordMeditation(uint256 _startTime, uint256 _endTime) external {
-        require(_endTime > _startTime, "Invalid time range");
+    function recordMeditation(
+        uint256 _startBlock,
+        uint256 _endBlock,
+        uint256 _totalCount,
+        string calldata _chain
+    ) external {
+        require(_endBlock > _startBlock, "Invalid block range");
 
-        Meditation memory m = Meditation(_startTime, _endTime);
+        // 產生 pseudo-random unique id
+        bytes32 meditationId = keccak256(
+            abi.encodePacked(msg.sender, _startBlock, _endBlock, _totalCount, _chain, block.number, blockhash(block.number - 1))
+        );
+
+        Meditation memory m = Meditation(meditationId, _startBlock, _endBlock, _totalCount, _chain);
         records[msg.sender].push(m);
 
-        // 調用 mint 函數發行獎勵代幣
         token.mint(msg.sender, reward);
 
-        emit MeditationRecorded(msg.sender, _startTime, _endTime, reward);
+        emit MeditationRecorded(
+            msg.sender,
+            meditationId,
+            _startBlock,
+            _endBlock,
+            _totalCount,
+            _chain,
+            reward
+        );
+    }
+
+    function getMeditationRecords(address user) external view returns (Meditation[] memory) {
+        return records[user];
     }
 }
