@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "../styles/Meditate.module.css";
 import { useBreath } from "../contexts/BreathContext";
+import { useBlockNumber } from "wagmi";
 
 // Define a mapping of breathing timings for different configurations.
 // Each object now includes a "cycles" property.
@@ -17,22 +18,16 @@ const breathingTimingsMap = {
 };
 
 export default function Meditate() {
-  // Initial 3-2-1 countdown state (before starting the breathing cycle)
   const [initialCount, setInitialCount] = useState(3);
-  // Breathing phase: "", "inhale", "hold", "exhale", or "done"
   const [breathingPhase, setBreathingPhase] = useState("");
-  // Seconds remaining in the current phase
   const [phaseTimeLeft, setPhaseTimeLeft] = useState(0);
-  // Circle scale state: 1 = minimum, 1.5 = maximum
   const [circleScale, setCircleScale] = useState(1);
-  // Transition duration (in seconds) for the circle scaling animation
   const [transitionDuration, setTransitionDuration] = useState(0);
-  // Count the number of complete cycles finished
   const [cycleCount, setCycleCount] = useState(0);
+  const { data: startBlock } = useBlockNumber() ?? { data: 0 };
+  console.log("startBlock", startBlock);
 
-  // Get the selected chain from the Breath context
-  const { chain } = useBreath();
-  // Use a fallback (e.g. "ethereum") if chain is undefined or not in the map.
+  const { chain, setStartBlock } = useBreath();
   const selectedTimings =
     breathingTimingsMap[
       (chain as keyof typeof breathingTimingsMap) || "ethereum"
@@ -49,6 +44,8 @@ export default function Meditate() {
       return () => clearTimeout(timer);
     } else {
       // Start the breathing cycle with the "inhale" phase
+      if (startBlock) setStartBlock(startBlock);
+
       setBreathingPhase("inhale");
       setPhaseTimeLeft(selectedTimings.inhale);
       setTransitionDuration(selectedTimings.inhale);

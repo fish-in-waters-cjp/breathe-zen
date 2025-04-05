@@ -3,8 +3,8 @@ import React from "react";
 export const getBreathMessage = (
   chainName: string,
   duration: string,
-  startBlock: number,
-  endBlock: number
+  startBlock: bigint,
+  endBlock: bigint
 ) => {
   const style = {
     color: "rgb(234,244,203)",

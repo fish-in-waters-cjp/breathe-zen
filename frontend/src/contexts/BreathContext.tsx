@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState } from "react";
 
 type BreathState = {
   chain: string | null;
-  startBlock: number | null;
+  startBlock: bigint | null;
   setChain: (chain: string) => void;
-  setStartBlock: (block: number) => void;
+  setStartBlock: (block: bigint) => void;
   reset: () => void;
 };
 
@@ -14,7 +14,7 @@ export const BreathProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [chain, setChainName] = useState<string | null>(null);
-  const [startBlock, setStartBlock] = useState<number | null>(null);
+  const [startBlock, setStartBlock] = useState<bigint | null>(null);
 
   const setChain = (name: string) => {
     setChainName(name);
