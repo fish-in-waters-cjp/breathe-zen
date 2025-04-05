@@ -1,0 +1,43 @@
+/* Container with a gradient background and centered content */
+.container {
+    padding: 2rem;
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Container for the breathing cycle */
+.breathingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Breathing phase text style */
+.breathingText {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+/* The animated circle */
+.circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid #0070f3;
+    background: transparent;
+    box-shadow: 0 0 20px #0070f3;
+    margin-top: 2.5rem;
+}
+
+/* Overlay for the final 3-second countdown during exhale */
+.overlayCountdown {
+    position: absolute;
+    top: 20px;
+    font-size: 4rem;
+    font-weight: bold;
+}
