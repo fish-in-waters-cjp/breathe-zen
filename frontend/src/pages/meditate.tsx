@@ -1,11 +1,11 @@
 "use client";
 
+import { getPublicClient } from "@wagmi/core";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { config } from "../configs/blockNumberConfig";
 import { useBreath } from "../contexts/BreathContext";
 import styles from "../styles/Meditate.module.css";
-import { getPublicClient } from "@wagmi/core";
-import { config } from "../configs/blockNumberConfig";
 import { chainIds } from "./result";
 
 // Define a mapping of breathing timings for different configurations.
@@ -55,7 +55,7 @@ export default function Meditate() {
         chainId,
       })
         .getBlockNumber()
-        .then((blockNumber) => {
+        .then((blockNumber: bigint) => {
           console.log("blockNumber", blockNumber);
           setStartBlock(blockNumber);
         });
@@ -68,7 +68,7 @@ export default function Meditate() {
         setCircleScale(1.5);
       }, 50);
     }
-  }, [initialCount, selectedTimings]);
+  }, [initialCount, selectedTimings, chain, setStartBlock]);
 
   // BREATHING PHASE EFFECT
   useEffect(() => {

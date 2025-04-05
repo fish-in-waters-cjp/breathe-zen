@@ -23,14 +23,26 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "startTime",
+          "name": "startBlock",
           "type": "uint256"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "endTime",
+          "name": "endBlock",
           "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "totalCount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "chain",
+          "type": "string"
         },
         {
           "indexed": false,
@@ -46,13 +58,23 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_startTime",
+          "name": "_startBlock",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
-          "name": "_endTime",
+          "name": "_endBlock",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_totalCount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_chain",
+          "type": "string"
         }
       ],
       "name": "recordMeditation",

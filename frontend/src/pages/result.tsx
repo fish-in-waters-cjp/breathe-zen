@@ -2,15 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount, useChainId, useWriteContract } from "wagmi";
+import { useAccount, useChainId, useChains, useConfig, usePublicClient, useWriteContract } from "wagmi";
 import MeditationRecorderABI from "../abis/MeditationRecorder.json";
 import { CONTRACTS } from "../config/contracts";
 import { useBreath } from "../contexts/BreathContext";
 import { getBreathMessage } from "../hooks/getBreathMessage";
 import styles from "../styles/Result.module.css";
 import { chainSettings, formatDuration } from "./settings";
-import { getPublicClient } from "@wagmi/core";
-import { config } from "../configs/blockNumberConfig";
 
 export const chainIds: { [key: string]: number } = {
   ethereum: 1,
@@ -42,12 +40,11 @@ export default function Result() {
   const totalDuration = chainSettings[chain ?? "ethereum"]?.totalDuration;
   const duration = formatDuration(totalDuration);
 
-  // 從 localStorage 獲取開始時間，確保是有效的數字
-  const rawStartTime = localStorage.getItem("meditationStartTime");
-  const startTime = rawStartTime ? parseInt(rawStartTime) : null;
-  const endTime = Math.floor(Date.now() / 1000); // 當前時間作為結束時間
-
   const { writeContractAsync: recordMeditation } = useWriteContract();
+  const chains = useChains();
+  const config = useConfig();
+  const currentChain = config.chains.find(c => c.id === chainId);
+  const publicClient = usePublicClient();
 
   useEffect(() => {
     const selected = getBreathMessage(
@@ -60,100 +57,6 @@ export default function Result() {
   }, [chainName, duration, endBlock, startBlock]);
 
   useEffect(() => {
-    const recordMeditationSession = async () => {
-      console.log("=== Initial Check ===");
-      console.log("isRecording:", isRecording);
-      console.log("recordSuccess:", recordSuccess);
-      console.log("startTime:", startTime);
-      console.log("address:", address);
-      console.log("chainId:", chainId);
-
-      if (!address) {
-        console.log("No wallet connected");
-        return;
-      }
-
-      if (!startTime) {
-        console.log("No start time found");
-        return;
-      }
-
-      if (isRecording || recordSuccess) {
-        console.log("Already recording or success");
-        return;
-      }
-
-      if (
-        !isRecording &&
-        !recordSuccess &&
-        startTime &&
-        !isNaN(startTime) &&
-        address
-      ) {
-        const startTimeNum = Math.floor(Number(startTime));
-        const endTimeNum = Math.floor(Number(endTime));
-
-        // 驗證時間範圍
-        if (endTimeNum <= startTimeNum) {
-          setErrorMessage(
-            "Invalid time range: end time must be greater than start time"
-          );
-          return;
-        }
-
-        const contractAddress =
-          CONTRACTS[chainId as keyof typeof CONTRACTS]?.MeditationRecorder;
-        if (!contractAddress) {
-          setErrorMessage(`Contract not found for chain ID: ${chainId}`);
-          return;
-        }
-
-        console.log("=== Meditation Record Details ===");
-        console.log("Chain ID:", chainId);
-        console.log("Contract Address:", contractAddress);
-        console.log("User Address:", address);
-        console.log(
-          "Start Time:",
-          new Date(startTimeNum * 1000).toLocaleString()
-        );
-        console.log("End Time:", new Date(endTimeNum * 1000).toLocaleString());
-        console.log("Duration (minutes):", (endTimeNum - startTimeNum) / 60);
-
-        setIsRecording(true);
-        try {
-          const hash = await recordMeditation({
-            address: contractAddress as `0x${string}`,
-            abi: MeditationRecorderABI.abi,
-            functionName: "recordMeditation",
-            args: [BigInt(startTimeNum), BigInt(endTimeNum)],
-          });
-
-          console.log("Transaction hash:", hash);
-          setRecordSuccess(true);
-          localStorage.removeItem("meditationStartTime");
-        } catch (error: any) {
-          console.error("Transaction error:", error);
-          setErrorMessage(
-            error?.message ||
-              "Transaction failed. Please check console for details."
-          );
-          setIsRecording(false);
-        }
-      }
-    };
-
-    recordMeditationSession();
-  }, [
-    address,
-    chainId,
-    endTime,
-    isRecording,
-    recordMeditation,
-    recordSuccess,
-    startTime,
-  ]);
-
-  useEffect(() => {
     if (!chainName || !duration || !startBlock) return;
     const getMsgAndBlockHeight = async () => {
       const chainId = chainIds[chain ?? "ethereum"] as
@@ -162,25 +65,67 @@ export default function Result() {
         | 137
         | 42161
         | 8453;
-      console.log("chainId", chainId, "chain", chain);
-      getPublicClient(config, {
-        chainId,
-      })
-        .getBlockNumber()
-        .then((blockNumber) => {
-          console.log("blockNumber", blockNumber);
-          setEndBlock(blockNumber);
-          const selected = getBreathMessage(
-            chainName,
-            duration,
-            startBlock,
-            blockNumber
-          );
-          setMessage(selected);
-        });
+      try {
+        const blockNumber = await publicClient.getBlockNumber();
+        setEndBlock(blockNumber);
+        const selected = getBreathMessage(
+          chainName,
+          duration,
+          startBlock,
+          blockNumber
+        );
+        setMessage(selected);
+      } catch (error) {
+        console.error('Error getting block number:', error);
+      }
     };
     getMsgAndBlockHeight();
-  }, [chainName, duration, startBlock]);
+  }, [chainName, duration, startBlock, publicClient]);
+
+  useEffect(() => {
+    const recordMeditationSession = async () => {
+      if (isRecording || recordSuccess || !address || !startBlock || !endBlock || !totalDuration) {
+        return;
+      }
+
+      const contractAddress = CONTRACTS[chainId as keyof typeof CONTRACTS]?.MeditationRecorder;
+      if (!contractAddress) {
+        setErrorMessage(`Contract not found for chain ID: ${chainId}`);
+        return;
+      }
+      
+      setIsRecording(true);
+      try {
+        const hash = await recordMeditation({
+          address: contractAddress as `0x${string}`,
+          abi: MeditationRecorderABI.abi,
+          functionName: 'recordMeditation',
+          args: [
+            BigInt(startBlock),
+            BigInt(endBlock),
+            BigInt(totalDuration),
+            chain ?? "ethereum"
+          ],
+          chainId: chainId,
+          account: address,
+          chain: currentChain
+        });
+        
+        setRecordSuccess(true);
+      } catch (error: any) {
+        if (error.message?.includes('queue')) {
+          setErrorMessage('請稍後再試，目前請求過多');
+        } else {
+          setErrorMessage(error?.message || '交易失敗，請查看控制台獲取詳細信息');
+        }
+        setIsRecording(false);
+      }
+    };
+
+    if (address && startBlock && endBlock && totalDuration && !isRecording && !recordSuccess) {
+      recordMeditationSession();
+    }
+  }, [address, chainId, endBlock, startBlock, chain, totalDuration, isRecording, recordSuccess]);
 
   if (!message) {
     return <p className="text-gray-500">Preparing your message...</p>;
