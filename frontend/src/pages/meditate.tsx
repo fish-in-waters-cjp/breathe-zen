@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useBlockNumber } from "wagmi";
 import { useBreath } from "../contexts/BreathContext";
 import styles from "../styles/Meditate.module.css";
+import { getPublicClient } from "@wagmi/core";
+import { config } from "../configs/blockNumberConfig";
+import { chainIds } from "./result";
 
 // Define a mapping of breathing timings for different configurations.
 // Each object now includes a "cycles" property.
@@ -24,8 +26,6 @@ export default function Meditate() {
   const [circleScale, setCircleScale] = useState(1);
   const [transitionDuration, setTransitionDuration] = useState(0);
   const [cycleCount, setCycleCount] = useState(0);
-  const { data: startBlock } = useBlockNumber() ?? { data: 0 };
-  console.log("startBlock", startBlock);
 
   const { chain, setStartBlock } = useBreath();
   const selectedTimings =
@@ -44,10 +44,21 @@ export default function Meditate() {
       return () => clearTimeout(timer);
     } else {
       // Start the breathing cycle with the "inhale" phase
-      if (startBlock) setStartBlock(startBlock);
-      
-      // 設置開始時間
-      localStorage.setItem('meditationStartTime', Math.floor(Date.now() / 1000).toString());
+      const chainId = chainIds[chain ?? "ethereum"] as
+        | 1
+        | 10
+        | 137
+        | 42161
+        | 8453;
+      console.log("chainId", chainId);
+      getPublicClient(config, {
+        chainId,
+      })
+        .getBlockNumber()
+        .then((blockNumber) => {
+          console.log("blockNumber", blockNumber);
+          setStartBlock(blockNumber);
+        });
 
       setBreathingPhase("inhale");
       setPhaseTimeLeft(selectedTimings.inhale);
@@ -126,9 +137,11 @@ export default function Meditate() {
             }}
           ></div>
           {/* During exhale, if 3 seconds or less remain, show the countdown overlay */}
-          {breathingPhase === "exhale" && phaseTimeLeft <= 3 && (
-            <div className={styles.overlayCountdown}>{phaseTimeLeft}</div>
-          )}
+          {breathingPhase === "exhale" &&
+            phaseTimeLeft <= 3 &&
+            cycleCount === selectedTimings.cycles && (
+              <div className={styles.overlayCountdown}>{phaseTimeLeft}</div>
+            )}
         </div>
       )}
     </div>
