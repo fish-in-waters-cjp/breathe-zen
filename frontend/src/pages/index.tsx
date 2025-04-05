@@ -24,8 +24,6 @@ const Home: NextPage = () => {
     chain: "mainnet",
     startBlock: 1849234,
     endBlock: 1849258,
-    startTime: "2023-08-01 09:00:00",
-    endTime: "2023-08-01 09:10:00",
   };
 
   if (!isConnected) {
@@ -46,7 +44,7 @@ const Home: NextPage = () => {
       <div className={styles.mainContainer}>
         {/* Header */}
         <header className={styles.header}>
-          <h1 className={styles.headerTitle}>✨ Breath Reflection ✨</h1>
+          <h1 className={styles.headerTitle}>✨ Breathe Zen ✨</h1>
         </header>
 
         {/* Meditation Record */}
