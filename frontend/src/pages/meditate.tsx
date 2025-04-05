@@ -126,9 +126,6 @@ export default function Meditate() {
       {/* Display the breathing cycle UI when countdown is finished */}
       {breathingPhase && breathingPhase !== "done" && initialCount === 0 && (
         <div className={styles.breathingContainer}>
-          <h1 className={styles.breathingText}>
-            {breathingPhase.charAt(0).toUpperCase() + breathingPhase.slice(1)}
-          </h1>
           <div
             className={styles.circle}
             style={{
@@ -136,6 +133,9 @@ export default function Meditate() {
               transition: `transform ${transitionDuration}s linear`,
             }}
           ></div>
+          <h1 className={styles.breathingText}>
+            {breathingPhase.charAt(0).toUpperCase() + breathingPhase.slice(1)}
+          </h1>
           {/* During exhale, if 3 seconds or less remain, show the countdown overlay */}
           {breathingPhase === "exhale" &&
             phaseTimeLeft <= 3 &&
